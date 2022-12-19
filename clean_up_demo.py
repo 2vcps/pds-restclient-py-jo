@@ -14,7 +14,7 @@ users = pds_rest.get_users(account_id)
 ten_id = pds_rest.get_tenants(account_id)
 ten_id = json.dumps(ten_id["data"][0]["id"])
 ten_id = ten_id.replace('"', '')
-targets = pds_rest.get_deploymenttargets(ten_id)
+targets = pds_rest.get_deployment_targets(ten_id)
 targetjson = json.dumps(targets["data"])
 
 #Finds unhealthy clusters, deletes all deployments on them then deletes the cluster

@@ -5,6 +5,7 @@ import os
 baseURL = "https://prod.pds.portworx.com/api"
 bearer_token = str(os.getenv("BEARER_TOKEN"))
 
+# Auth
 def bearer_oauth(r):
     """
     Method required by bearer token authentication.
@@ -14,7 +15,9 @@ def bearer_oauth(r):
     r.headers["accept"] = "application/json"
     return r
 
+# Accounts
 def get_accounts():
+    #lists accounts
     response = requests.get(
         baseURL + "/accounts", auth=bearer_oauth
     )
@@ -24,7 +27,35 @@ def get_accounts():
         )
     return response.json()
 
+def post_accounts():
+    #Creates PDS Account (PDS CP Admins only)
+    response = requests.get(
+        baseURL + "/accounts", auth=bearer_oauth
+    )
+    ''' POST BODY
+    {
+  "dns_details": {
+    "aws_details": {
+      "access_key": "string",
+      "hosted_zone_id": "string",
+      "secret_key": "string"
+    },
+    "dns_zone": "string"
+  },
+  "maas_details": {
+    "maas_id": "string"
+  },
+  "name": "string"
+}
+    '''
+    if response.status_code != 200:
+        raise Exception(
+            "Cannot get rules (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
 def get_account(acc_id):
+    # Get details of specified account
     response = requests.post(
         baseURL + "/accounts/" + acc_id, auth=bearer_oauth
     )
@@ -34,24 +65,25 @@ def get_account(acc_id):
         )
     return response.json()
 
-def create_account():
-    print('not yet implemented')
-    # response = requests.post(
-    #     baseURL + "/accounts", auth=bearer_oauth
-    # )
-    # if response.status_code != 200:
-    #     raise Exception(
-    #         "Cannot get rules (HTTP {}): {}".format(response.status_code, response.text)
-    #     )
-    # return response.json()
-
-def accept_eula(acc_id):
+def put_eula(acc_id):
+    # Accept EULA
     response = requests.put(
         baseURL + "/accounts/" + acc_id + "/eula", auth=bearer_oauth
     )
-    if response.status_code != 200:
+    if response.status_code != 204:
         raise Exception(
-            "Cannot create account (HTTP {}): {}".format(response.status_code, response.text)
+            "Cannot accept EULA (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+def put_global_config(acc_id):
+    # Modify Accounts Global Config
+    response = requests.put(
+        baseURL + "/accounts/" + acc_id + "/global-config", auth=bearer_oauth
+    )
+    if response.status_code != 204:
+        raise Exception(
+            "Error changing Global Config (HTTP {}): {}".format(response.status_code, response.text)
         )
     return response.json()
 
@@ -65,49 +97,120 @@ def get_users(acc_id):
         )
     return response.json()
 
-def get_dataservices():
-    response = requests.get(
-       baseURL + "/data-services/", auth=bearer_oauth
+#Account DNS
+def put_dns_details(acc_id):
+    #Modify DNS details for desired account
+    response = requests.put(
+        baseURL + "/accounts/" + acc_id + "/dns-details", auth=bearer_oauth
     )
-    if response.status_code != 200:
+    '''{ POST BODY
+  "aws_details": {
+    "access_key": "string",
+    "hosted_zone_id": "string",
+    "secret_key": "string"
+  },
+  "dns_zone": "string"
+}'''
+    if response.status_code != 204:
         raise Exception(
-            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+            "Error changing DNS (HTTP {}): {}".format(response.status_code, response.text)
         )
     return response.json()
 
+# AccountRoleBindings
+# Skipping for now
+# Accounts MAASDetails
+# Same
+
+# Tenants
 def get_tenants(acc_id):
+    # Get tenants for an account id
     response = requests.get(
        baseURL + "/accounts/" + acc_id + "/tenants" , auth=bearer_oauth
     )
     if response.status_code != 200:
         raise Exception(
-            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+            "Error get tenants (HTTP {}): {}".format(response.status_code, response.text)
         )
     return response.json()
 
-def get_tenant_projects(tenant_id):
+def get_tenant(ten_id):
+    # get tenant details
     response = requests.get(
-       baseURL + "/tenants/" + tenant_id + "/projects", auth=bearer_oauth
+       baseURL + "/tenants/" + ten_id, auth=bearer_oauth
     )
     if response.status_code != 200:
         raise Exception(
-            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+            "Error getting tenant (HTTP {}): {}".format(response.status_code, response.text)
         )
     return response.json()
 
-def get_deploymenttargets(tenant_id):
+def get_tenant_dns_details(ten_id):
+    # get tenant details
     response = requests.get(
-       baseURL + "/tenants/" + tenant_id + "/deployment-targets", auth=bearer_oauth
+       baseURL + "/tenants/" + ten_id + "/dns-details", auth=bearer_oauth
     )
     if response.status_code != 200:
         raise Exception(
-            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+            "Error getting tenant (HTTP {}): {}".format(response.status_code, response.text)
         )
     return response.json()
 
-def delete_deploymenttargets(target_id):
+#ApplicationConfigurationTemplates, Authorizer, BackupCredentials, BackupJobs, BackupPolicies, BackupTargets, Backups, Versions
+
+#DataServices
+def get_data_services():
+    #Get data services
+    response = requests.get(
+       baseURL + "/data-services/", auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Error lising Data Services (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+def get_data_service(ds_id):
+    #Get data services
+    response = requests.get(
+       baseURL + "/data-services/" + ds_id, auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Error getting Data Service (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+# Tasks, SampleTemplates
+
+#Deployment Targets
+
+def get_deployment_target(dep_id):
+    response = requests.get(
+       baseURL + "/deployment-targets/" + dep_id, auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Error getting deployment target (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+def put_deployment_target(dep_id):
+    response = requests.put(
+       baseURL + "/deployment-targets/" + dep_id, auth=bearer_oauth
+    )
+    '''{
+  "name": "string"
+}'''
+    if response.status_code != 201:
+        raise Exception(
+            "Error updating deployment target (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+def delete_deployment_target(dep_id):
     response = requests.delete(
-       baseURL + "/deployment-targets/" + target_id, auth=bearer_oauth
+       baseURL + "/deployment-targets/" + dep_id, auth=bearer_oauth
     )
     print(response.status_code)
     if response.status_code != 204:
@@ -116,6 +219,18 @@ def delete_deploymenttargets(target_id):
         )
     # return response.json()
 
+def get_deployment_target_config(dep_id):
+    response = requests.get(
+       baseURL + "/deployment-targets/" + dep_id + "/config", auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Error getting deployment target config (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+# more for deployment targets needed.
+
+# Deployments
 def get_deployments(project_id):
     response = requests.get(
        baseURL + "/projects/" + project_id + "/deployments", auth=bearer_oauth
@@ -137,6 +252,28 @@ def delete_deployments(deployment_id):
              "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
          )
     return response.text
+
+def get_deployment_targets(tenant_id):
+    response = requests.get(
+       baseURL + "/tenants/" + tenant_id + "/deployment-targets", auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
+
+#Projects
+
+def get_tenant_projects(tenant_id):
+    response = requests.get(
+       baseURL + "/tenants/" + tenant_id + "/projects", auth=bearer_oauth
+    )
+    if response.status_code != 200:
+        raise Exception(
+            "Cannot get users (HTTP {}): {}".format(response.status_code, response.text)
+        )
+    return response.json()
 
 def unhealthy_cluster(target_json):
     item_dict = json.loads(target_json)
@@ -183,6 +320,6 @@ def clean_unhealthy_clusters(target_json, ten_id):
         g = unhealthy_deployments(ten_id, x)
         for y in g:
             delete_deployments(y)
-        delete_deploymenttargets(x)
+        delete_deployment_target(x)
 
 

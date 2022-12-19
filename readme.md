@@ -37,3 +37,8 @@ or download the file and run:
 export BEARER_TOKEN="yourpdstoken"
 python3 clean_up_demo.py
 ```
+
+## Get all your accounts PDS Users Email address and export (requires jq)
+```
+python3 ./get_users.py| jq '.data[].email' -r
+```
